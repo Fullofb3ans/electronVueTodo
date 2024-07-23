@@ -1,0 +1,11 @@
+:root {
+  --track24color: #2196f3;
+  --gdeposylkacolor: #f57815;
+  --track24colorDark: #135083;
+  --gdeposylkacolorDark: #a55513;
+}
+
+
+* {
+  font-size: 18px;
+}
