@@ -75,59 +75,89 @@ app.on('window-all-closed', () => {
 const fs = require('fs')
 const path = require('path')
 
-ipcMain.handle('getTasks', () => {
-  const filePath = path.join(process.cwd(), 'tasks.json')
+const addNewTask = (task, groupName) => {
+  console.log(groupName)
+  const filePath = path.join(process.cwd(), 'taskGroups.json')
+  if (fs.existsSync(filePath)) {
+    let taskGroups = JSON.parse(fs.readFileSync(filePath, 'utf8'))
+    const group = taskGroups.find((g) => g.name == groupName)
+    if (group) {
+      const newTask = { id: group.tasks.length + 1, name: task }
+      group.tasks.push(newTask)
+      fs.writeFileSync(filePath, JSON.stringify(taskGroups, null, 2))
+    }
+  }
+}
+
+const removeTask = (taskId, groupName) => {
+  console.log('eto' + groupName)
+  console.log('eto' + taskId)
+  const filePath = path.join(process.cwd(), 'taskGroups.json')
+  if (fs.existsSync(filePath)) {
+    let taskGroups = JSON.parse(fs.readFileSync(filePath, 'utf8'))
+    const group = taskGroups.find((g) => g.name == groupName)
+    console.log(taskGroups)
+    if (group) {
+      group.tasks = group.tasks.filter((task) => task.id !== Number(taskId))
+      console.log('etp' + group)
+      fs.writeFileSync(filePath, JSON.stringify(taskGroups, null, 2))
+    }
+  }
+}
+const addTaskGroup = (groupName) => {
+  const filePath = path.join(process.cwd(), 'taskGroups.json')
+  let taskGroups = []
   if (fs.existsSync(filePath)) {
     const fileContent = fs.readFileSync(filePath, 'utf8')
-    return JSON.parse(fileContent)
+    taskGroups = JSON.parse(fileContent)
+  }
+  const newGroup = { id: taskGroups.length + 1, name: groupName, tasks: [] }
+  taskGroups.push(newGroup)
+  fs.writeFileSync(filePath, JSON.stringify(taskGroups, null, 2))
+  return newGroup
+}
+
+const removeTaskGroup = (groupName) => {
+  console.log('eto' + groupName)
+  const filePath = path.join(process.cwd(), 'taskGroups.json')
+  if (fs.existsSync(filePath)) {
+    let taskGroups = JSON.parse(fs.readFileSync(filePath, 'utf8'))
+    taskGroups = taskGroups.filter((group) => group.name !== groupName)
+    fs.writeFileSync(filePath, JSON.stringify(taskGroups, null, 2))
+  }
+}
+
+const getTasks = (taskGroup) => {
+  console.log(taskGroup)
+  const filePath = path.join(process.cwd(), 'taskGroups.json')
+  if (fs.existsSync(filePath)) {
+    const fileContent = fs.readFileSync(filePath, 'utf8')
+    const taskGroups = JSON.parse(fileContent)
+    const group = taskGroups.find((g) => g.name == taskGroup)
+    console.log(group + 'dsadsa')
+    return group ? group.tasks : []
   }
   return []
-})
-
-const addNewTask = (task) => {
-  console.log('работаем с сервера')
-  const filePath = path.join(process.cwd(), 'tasks.json')
-
-  // Чтение существующего файла или создание пустого массива
-  let tasks = [{}]
-  let index
-  if (fs.existsSync(filePath)) {
-    const fileContent = fs.readFileSync(filePath, 'utf8')
-    tasks = JSON.parse(fileContent)
-    index = tasks.length + 2
-  }
-
-  // Добавление новой задачи
-  tasks.push({ id: index, name: task })
-  console.log(tasks)
-
-  // Запись обновленного списка задач в файл
-  fs.writeFileSync(filePath, JSON.stringify(tasks, null, 2))
-}
-const removeTask = (taskId) => {
-  console.log('работаем с сервера')
-  const filePath = path.join(process.cwd(), 'tasks.json')
-
-  let tasks = []
-  if (fs.existsSync(filePath)) {
-    const fileContent = fs.readFileSync(filePath, 'utf8')
-    tasks = JSON.parse(fileContent)
-  }
-
-  // Remove the task with the given taskId
-  tasks = tasks.filter((task) => task.id !== taskId)
-
-  // Reassign IDs in order
-  tasks = tasks.map((task, index) => ({
-    ...task,
-    id: index + 1
-  }))
-
-  console.log(tasks)
-
-  // Write the updated task list back to the file
-  fs.writeFileSync(filePath, JSON.stringify(tasks, null, 2))
 }
 
-ipcMain.handle('addNewTask', (_, task) => addNewTask(task))
-ipcMain.handle('removeTask', (_, taskId) => removeTask(taskId))
+const getGroups = () => {
+  const filePath = path.join(process.cwd(), 'taskGroups.json')
+  if (fs.existsSync(filePath)) {
+    const tabs = []
+    const fileContent = fs.readFileSync(filePath, 'utf8')
+    const taskGroups = JSON.parse(fileContent)
+    taskGroups.map((item) => {
+      tabs.push(item.name)
+    })
+    console.log(tabs)
+    return tabs
+  }
+  return []
+}
+
+ipcMain.handle('addTaskGroup', (_, groupName) => addTaskGroup(groupName))
+ipcMain.handle('removeTaskGroup', (_, groupName) => removeTaskGroup(groupName))
+ipcMain.handle('addNewTask', (_, task, groupName) => addNewTask(task, groupName))
+ipcMain.handle('removeTask', (_, taskId, groupName) => removeTask(taskId, groupName))
+ipcMain.handle('getTasks', (_, taskGroup) => getTasks(taskGroup))
+ipcMain.handle('getGroups', () => getGroups())

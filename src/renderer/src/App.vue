@@ -1,27 +1,48 @@
 <script setup>
 import { ref, onMounted } from "vue";
+import Header from "./components/Header.vue";
 const tasks = ref("");
 const task = ref("");
-onMounted(async () => {
-  tasks.value = await window.electron.ipcRenderer.invoke("getTasks");
-});
+const activeTab = ref("");
+
 const addNewTask = async () => {
   if (task.value) {
-    window.electron.ipcRenderer.invoke("addNewTask", task.value);
+    window.electron.ipcRenderer.invoke("addNewTask", task.value, activeTab.value);
     task.value = "";
-    tasks.value = await window.electron.ipcRenderer.invoke("getTasks");
+    tasks.value = await window.electron.ipcRenderer.invoke("getTasks", activeTab.value);
+    console.log(tasks.value);
   }
 };
 
 const removeTask = async (id) => {
-  window.electron.ipcRenderer.invoke("removeTask", id);
-  tasks.value = await window.electron.ipcRenderer.invoke("getTasks");
+  window.electron.ipcRenderer.invoke("removeTask", id, activeTab.value);
+  tasks.value = await window.electron.ipcRenderer.invoke("getTasks", activeTab.value);
 };
+
+async function addTaskGroup(taskGroup) {
+  window.electron.ipcRenderer.invoke("addTaskGroup", taskGroup);
+  tasks.value = await window.electron.ipcRenderer.invoke("getTasks", activeTab.value);
+}
+async function removeTaskGroup(taskGroup) {
+  window.electron.ipcRenderer.invoke("removeTaskGroup", taskGroup);
+  tasks.value = await window.electron.ipcRenderer.invoke("getTasks", activeTab.value);
+}
+
+async function changeTaskGroup(taskGroup) {
+  activeTab.value = taskGroup;
+  tasks.value = await window.electron.ipcRenderer.invoke("getTasks", activeTab.value);
+}
 </script>
 
 <template>
+  <Header
+    @changeTaskGroup="changeTaskGroup"
+    @addTaskGroup="addTaskGroup"
+    @removeTaskGroup="removeTaskGroup"
+  />
   <div class="content">
     <div class="content__title">Todo List</div>
+
     <div class="input__block">
       <div class="input__wrapper">
         <input v-model="task" type="text" placeholder="Введите задачу" />
