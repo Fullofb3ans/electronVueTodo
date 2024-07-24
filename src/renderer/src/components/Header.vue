@@ -58,7 +58,7 @@ const goModal = () => {
       <input v-model="taskGroup" type="text" placeholder="Введите имя группы" />
       <div class="modal-buttons">
         <button class="task__delete" @click="goModal">Отмена</button>
-        <button @click="addTaskGroup">Добавить</button>
+        <button class="add__group" @click="addTaskGroup">Добавить</button>
       </div>
     </div>
   </div>
@@ -68,6 +68,14 @@ const goModal = () => {
   display: flex;
   background-color: #1e1e1e;
   flex-wrap: wrap;
+}
+
+.add__group {
+  background-color: #3a9185;
+}
+
+.add__group:hover {
+  background-color: #245952;
 }
 
 .tab_wrapper {
@@ -182,5 +190,9 @@ const goModal = () => {
 
 .task__delete:hover {
   background-color: #6a141d;
+}
+
+input {
+  outline: none;
 }
 </style>

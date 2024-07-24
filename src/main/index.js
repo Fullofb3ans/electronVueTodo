@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain, Tray } from 'electron'
+import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 
@@ -82,7 +82,7 @@ const addNewTask = (task, groupName) => {
     let taskGroups = JSON.parse(fs.readFileSync(filePath, 'utf8'))
     const group = taskGroups.find((g) => g.name == groupName)
     if (group) {
-      const newTask = { id: group.tasks.length + 1, name: task }
+      const newTask = { id: group.tasks.length + 1, name: task, status: '' }
       group.tasks.push(newTask)
       fs.writeFileSync(filePath, JSON.stringify(taskGroups, null, 2))
     }
@@ -99,7 +99,6 @@ const removeTask = (taskId, groupName) => {
     console.log(taskGroups)
     if (group) {
       group.tasks = group.tasks.filter((task) => task.id !== Number(taskId))
-      console.log('etp' + group)
       fs.writeFileSync(filePath, JSON.stringify(taskGroups, null, 2))
     }
   }
@@ -155,9 +154,29 @@ const getGroups = () => {
   return []
 }
 
+const confirmTask = (id, groupName) => {
+  console.log(id)
+  const filePath = path.join(process.cwd(), 'taskGroups.json')
+  if (fs.existsSync(filePath)) {
+    let taskGroups = JSON.parse(fs.readFileSync(filePath, 'utf8'))
+    const group = taskGroups.find((g) => g.name == groupName)
+    if (group) {
+      group.tasks.map((item) => {
+        if (item.id == id && item.status !== 'done') {
+          item.status = 'done'
+        } else if (item.id == id && item.status == 'done') {
+          item.status = ''
+        }
+      })
+      fs.writeFileSync(filePath, JSON.stringify(taskGroups, null, 2))
+    }
+  }
+}
+
 ipcMain.handle('addTaskGroup', (_, groupName) => addTaskGroup(groupName))
 ipcMain.handle('removeTaskGroup', (_, groupName) => removeTaskGroup(groupName))
 ipcMain.handle('addNewTask', (_, task, groupName) => addNewTask(task, groupName))
 ipcMain.handle('removeTask', (_, taskId, groupName) => removeTask(taskId, groupName))
 ipcMain.handle('getTasks', (_, taskGroup) => getTasks(taskGroup))
 ipcMain.handle('getGroups', () => getGroups())
+ipcMain.handle('confirmTask', (_, taskId, groupName) => confirmTask(taskId, groupName))

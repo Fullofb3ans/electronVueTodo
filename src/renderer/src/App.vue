@@ -1,7 +1,7 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, computed } from "vue";
 import Header from "./components/Header.vue";
-const tasks = ref("");
+const tasks = ref([]);
 const task = ref("");
 const activeTab = ref("");
 
@@ -32,6 +32,17 @@ async function changeTaskGroup(taskGroup) {
   activeTab.value = taskGroup;
   tasks.value = await window.electron.ipcRenderer.invoke("getTasks", activeTab.value);
 }
+
+async function confirmTask(id) {
+  window.electron.ipcRenderer.invoke("confirmTask", id, activeTab.value);
+  tasks.value = await window.electron.ipcRenderer.invoke("getTasks", activeTab.value);
+}
+
+const numberOfConfirmed = computed(() => {
+  return tasks.value.reduce((accum, task) => {
+    return task.status == "done" ? accum + 1 : accum;
+  }, 0);
+});
 </script>
 
 <template>
@@ -41,16 +52,26 @@ async function changeTaskGroup(taskGroup) {
     @removeTaskGroup="removeTaskGroup"
   />
   <div class="content">
-    <div class="content__title">Todo List</div>
+    <div class="content__greetings">
+      <div class="content__title">Todo List</div>
+      <div class="task__stat">
+        <div>Выполнено: {{ numberOfConfirmed }}</div>
+        <div>Всего: {{ tasks.length }}</div>
+      </div>
+    </div>
 
-    <div class="input__block">
+    <div class="input__block" :class="{ disabled: !activeTab }">
       <div class="input__wrapper">
         <input v-model="task" type="text" placeholder="Введите задачу" />
-        <button @keyup.enter="addNewTask" @click="addNewTask">Добавить</button>
+        <button @click="addNewTask">Добавить</button>
       </div>
       <div class="task__wrapper">
         <div v-for="todo in tasks" :key="todo.id" class="task__block">
-          <div class="task__title">{{ todo.name }}</div>
+          <div class="task__title" :class="{ confirmed: todo.status == 'done' }">
+            {{ todo.name }}
+          </div>
+          <button class="task__confirm" @click="confirmTask(todo.id)">Выполнил</button>
+
           <button class="task__delete" @click="removeTask(todo.id)">Удалить</button>
         </div>
       </div>
@@ -59,6 +80,31 @@ async function changeTaskGroup(taskGroup) {
 </template>
 
 <style scoped>
+.content__greetings {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  justify-content: space-between;
+  padding-bottom: 10px;
+}
+.disabled {
+  display: none !important;
+}
+
+.task__confirm {
+  background-color: #737373;
+  color: rgb(255, 255, 255);
+  margin-right: 3px;
+}
+
+.task__confirm:hover {
+  background-color: #575757;
+}
+
+.confirmed {
+  text-decoration: line-through;
+}
+
 html,
 body {
   margin: 0;
@@ -110,7 +156,10 @@ button {
   cursor: pointer;
   transition: 0.3s;
   width: 120px;
+  min-width: 120px;
   font-size: 16px;
+  border-radius: 5px;
+  margin-left: -5px;
 }
 
 button:hover {
