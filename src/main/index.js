@@ -82,7 +82,7 @@ const addNewTask = (task, groupName) => {
     let taskGroups = JSON.parse(fs.readFileSync(filePath, 'utf8'))
     const group = taskGroups.find((g) => g.name == groupName)
     if (group) {
-      const newTask = { id: group.tasks.length + 1, name: task, status: '' }
+      const newTask = { id: group.tasks.length + 1, name: task, status: '', star: false }
       group.tasks.push(newTask)
       fs.writeFileSync(filePath, JSON.stringify(taskGroups, null, 2))
     }
@@ -172,6 +172,22 @@ const confirmTask = (id, groupName) => {
     }
   }
 }
+const claimStar = (id, groupName) => {
+  console.log(id)
+  const filePath = path.join(process.cwd(), 'taskGroups.json')
+  if (fs.existsSync(filePath)) {
+    let taskGroups = JSON.parse(fs.readFileSync(filePath, 'utf8'))
+    const group = taskGroups.find((g) => g.name == groupName)
+    if (group) {
+      group.tasks.map((item) => {
+        if (item.id == id) {
+          item.star = !item.star
+        }
+      })
+      fs.writeFileSync(filePath, JSON.stringify(taskGroups, null, 2))
+    }
+  }
+}
 
 ipcMain.handle('addTaskGroup', (_, groupName) => addTaskGroup(groupName))
 ipcMain.handle('removeTaskGroup', (_, groupName) => removeTaskGroup(groupName))
@@ -180,3 +196,4 @@ ipcMain.handle('removeTask', (_, taskId, groupName) => removeTask(taskId, groupN
 ipcMain.handle('getTasks', (_, taskGroup) => getTasks(taskGroup))
 ipcMain.handle('getGroups', () => getGroups())
 ipcMain.handle('confirmTask', (_, taskId, groupName) => confirmTask(taskId, groupName))
+ipcMain.handle('claimStar', (_, taskId, groupName) => claimStar(taskId, groupName))

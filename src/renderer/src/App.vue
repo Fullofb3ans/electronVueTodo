@@ -1,41 +1,51 @@
 <script setup>
 import { ref, computed } from "vue";
 import Header from "./components/Header.vue";
+import StarIcon from "./components/StarIcon.vue";
 const tasks = ref([]);
 const task = ref("");
 const activeTab = ref("");
+
+const refreshList = async () => {
+  tasks.value = await window.electron.ipcRenderer.invoke("getTasks", activeTab.value);
+};
 
 const addNewTask = async () => {
   if (task.value) {
     window.electron.ipcRenderer.invoke("addNewTask", task.value, activeTab.value);
     task.value = "";
-    tasks.value = await window.electron.ipcRenderer.invoke("getTasks", activeTab.value);
+    refreshList();
     console.log(tasks.value);
   }
 };
 
 const removeTask = async (id) => {
   window.electron.ipcRenderer.invoke("removeTask", id, activeTab.value);
-  tasks.value = await window.electron.ipcRenderer.invoke("getTasks", activeTab.value);
+  refreshList();
 };
 
 async function addTaskGroup(taskGroup) {
   window.electron.ipcRenderer.invoke("addTaskGroup", taskGroup);
-  tasks.value = await window.electron.ipcRenderer.invoke("getTasks", activeTab.value);
+  refreshList();
 }
 async function removeTaskGroup(taskGroup) {
   window.electron.ipcRenderer.invoke("removeTaskGroup", taskGroup);
-  tasks.value = await window.electron.ipcRenderer.invoke("getTasks", activeTab.value);
+  refreshList();
 }
 
 async function changeTaskGroup(taskGroup) {
   activeTab.value = taskGroup;
-  tasks.value = await window.electron.ipcRenderer.invoke("getTasks", activeTab.value);
+  refreshList();
 }
 
 async function confirmTask(id) {
   window.electron.ipcRenderer.invoke("confirmTask", id, activeTab.value);
-  tasks.value = await window.electron.ipcRenderer.invoke("getTasks", activeTab.value);
+  refreshList();
+}
+
+async function claimStar(id) {
+  window.electron.ipcRenderer.invoke("claimStar", id, activeTab.value);
+  refreshList();
 }
 
 const numberOfConfirmed = computed(() => {
@@ -43,6 +53,9 @@ const numberOfConfirmed = computed(() => {
     return task.status == "done" ? accum + 1 : accum;
   }, 0);
 });
+
+const onlyDone = ref(false);
+const onlyUndone = ref(false);
 </script>
 
 <template>
@@ -54,6 +67,35 @@ const numberOfConfirmed = computed(() => {
   <div class="content">
     <div class="content__greetings">
       <div class="content__title">Todo List</div>
+      <div class="content__nav">
+        <div
+          @click="
+            onlyUndone = false;
+            onlyDone = false;
+          "
+          :class="{ activeTab: !onlyUndone && !onlyDone }"
+        >
+          Все
+        </div>
+        <div
+          @click="
+            onlyUndone = true;
+            onlyDone = false;
+          "
+          :class="{ activeTab: onlyUndone && !onlyDone }"
+        >
+          В процессе
+        </div>
+        <div
+          @click="
+            onlyDone = true;
+            onlyUndone = false;
+          "
+          :class="{ activeTab: onlyDone && !onlyUndone }"
+        >
+          Готово
+        </div>
+      </div>
       <div class="task__stat">
         <div>Выполнено: {{ numberOfConfirmed }}</div>
         <div>Всего: {{ tasks.length }}</div>
@@ -66,13 +108,25 @@ const numberOfConfirmed = computed(() => {
         <button @click="addNewTask">Добавить</button>
       </div>
       <div class="task__wrapper">
-        <div v-for="todo in tasks" :key="todo.id" class="task__block">
+        <div
+          v-for="todo in tasks"
+          :key="todo.id"
+          class="task__block"
+          :class="{
+            none:
+              (todo.status == 'done' && onlyUndone) || (todo.status == '' && onlyDone),
+          }"
+        >
           <div class="task__title" :class="{ confirmed: todo.status == 'done' }">
             {{ todo.name }}
           </div>
-          <button class="task__confirm" @click="confirmTask(todo.id)">Выполнил</button>
+          <div class="buttonsGroup">
+            <StarIcon :class="{ active: todo.star }" @click="claimStar(todo.id)" />
 
-          <button class="task__delete" @click="removeTask(todo.id)">Удалить</button>
+            <button class="task__confirm" @click="confirmTask(todo.id)">Выполнил</button>
+
+            <button class="task__delete" @click="removeTask(todo.id)">Удалить</button>
+          </div>
         </div>
       </div>
     </div>
@@ -212,5 +266,34 @@ button:hover {
 
 input:focus-visible {
   outline: none;
+}
+
+.buttonsGroup {
+  display: inline-flex;
+  /* height: 100%; */
+  gap: 10px;
+  align-items: center;
+}
+
+.content__nav {
+  display: inline-flex;
+  gap: 50px;
+  color: #31d4be;
+  text-decoration: underline;
+  cursor: pointer;
+  align-items: self-end;
+  transition: 0.2s;
+}
+
+.content__nav > div:hover {
+  color: #1a6f64;
+}
+
+.none {
+  display: none;
+}
+
+.activeTab {
+  color: #1a6f64;
 }
 </style>
