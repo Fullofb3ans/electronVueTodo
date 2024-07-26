@@ -75,125 +75,95 @@ app.on('window-all-closed', () => {
 const fs = require('fs')
 const path = require('path')
 
-const addNewTask = (task, groupName) => {
-  console.log(groupName)
+const actionHandle = (task, groupName, action) => {
   const filePath = path.join(process.cwd(), 'taskGroups.json')
   if (fs.existsSync(filePath)) {
     let taskGroups = JSON.parse(fs.readFileSync(filePath, 'utf8'))
     const group = taskGroups.find((g) => g.name == groupName)
     if (group) {
-      const newTask = { id: group.tasks.length + 1, name: task, status: '', star: false }
-      group.tasks.push(newTask)
+      if (action == 'addTask') {
+        const newTask = { id: group.tasks.length + 1, name: task, status: '', star: false }
+        group.tasks.push(newTask)
+        fs.writeFileSync(filePath, JSON.stringify(taskGroups, null, 2))
+      } else if (action == 'removeTask') {
+        group.tasks = group.tasks.filter((item) => item.id !== Number(task))
+        fs.writeFileSync(filePath, JSON.stringify(taskGroups, null, 2))
+      }
+    }
+  }
+}
+
+const groupHandle = (groupName, action) => {
+  const filePath = path.join(process.cwd(), 'taskGroups.json')
+  let taskGroups = JSON.parse(fs.readFileSync(filePath, 'utf8'))
+  if (fs.existsSync(filePath)) {
+    if (action == 'addGroup') {
+      const newGroup = { id: taskGroups.length + 1, name: groupName, tasks: [] }
+      taskGroups.push(newGroup)
+      fs.writeFileSync(filePath, JSON.stringify(taskGroups, null, 2))
+      return newGroup
+    } else if (action == 'removeGroup') {
+      taskGroups = taskGroups.filter((group) => group.name !== groupName)
       fs.writeFileSync(filePath, JSON.stringify(taskGroups, null, 2))
     }
   }
 }
 
-const removeTask = (taskId, groupName) => {
-  console.log('eto' + groupName)
-  console.log('eto' + taskId)
+const changeTask = (id, groupName, action) => {
   const filePath = path.join(process.cwd(), 'taskGroups.json')
   if (fs.existsSync(filePath)) {
     let taskGroups = JSON.parse(fs.readFileSync(filePath, 'utf8'))
     const group = taskGroups.find((g) => g.name == groupName)
-    console.log(taskGroups)
     if (group) {
-      group.tasks = group.tasks.filter((task) => task.id !== Number(taskId))
+      if (action == 'changeStatus') {
+        group.tasks.map((item) => {
+          if (item.id == id && item.status !== 'done') {
+            item.status = 'done'
+          } else if (item.id == id && item.status == 'done') {
+            item.status = ''
+          }
+        })
+      } else if (action == 'changeStar') {
+        group.tasks.map((item) => {
+          if (item.id == id) {
+            item.star = !item.star
+          }
+        })
+      }
       fs.writeFileSync(filePath, JSON.stringify(taskGroups, null, 2))
     }
   }
 }
-const addTaskGroup = (groupName) => {
-  const filePath = path.join(process.cwd(), 'taskGroups.json')
-  let taskGroups = []
-  if (fs.existsSync(filePath)) {
-    const fileContent = fs.readFileSync(filePath, 'utf8')
-    taskGroups = JSON.parse(fileContent)
-  }
-  const newGroup = { id: taskGroups.length + 1, name: groupName, tasks: [] }
-  taskGroups.push(newGroup)
-  fs.writeFileSync(filePath, JSON.stringify(taskGroups, null, 2))
-  return newGroup
-}
 
-const removeTaskGroup = (groupName) => {
-  console.log('eto' + groupName)
+const getData = (taskGroup, action) => {
   const filePath = path.join(process.cwd(), 'taskGroups.json')
+  const fileContent = fs.readFileSync(filePath, 'utf8')
+  const taskGroups = JSON.parse(fileContent)
   if (fs.existsSync(filePath)) {
-    let taskGroups = JSON.parse(fs.readFileSync(filePath, 'utf8'))
-    taskGroups = taskGroups.filter((group) => group.name !== groupName)
-    fs.writeFileSync(filePath, JSON.stringify(taskGroups, null, 2))
-  }
-}
-
-const getTasks = (taskGroup) => {
-  console.log(taskGroup)
-  const filePath = path.join(process.cwd(), 'taskGroups.json')
-  if (fs.existsSync(filePath)) {
-    const fileContent = fs.readFileSync(filePath, 'utf8')
-    const taskGroups = JSON.parse(fileContent)
-    const group = taskGroups.find((g) => g.name == taskGroup)
-    console.log(group + 'dsadsa')
-    return group ? group.tasks : []
-  }
-  return []
-}
-
-const getGroups = () => {
-  const filePath = path.join(process.cwd(), 'taskGroups.json')
-  if (fs.existsSync(filePath)) {
-    const tabs = []
-    const fileContent = fs.readFileSync(filePath, 'utf8')
-    const taskGroups = JSON.parse(fileContent)
-    taskGroups.map((item) => {
-      tabs.push(item.name)
-    })
-    console.log(tabs)
-    return tabs
-  }
-  return []
-}
-
-const confirmTask = (id, groupName) => {
-  console.log(id)
-  const filePath = path.join(process.cwd(), 'taskGroups.json')
-  if (fs.existsSync(filePath)) {
-    let taskGroups = JSON.parse(fs.readFileSync(filePath, 'utf8'))
-    const group = taskGroups.find((g) => g.name == groupName)
-    if (group) {
-      group.tasks.map((item) => {
-        if (item.id == id && item.status !== 'done') {
-          item.status = 'done'
-        } else if (item.id == id && item.status == 'done') {
-          item.status = ''
-        }
+    if (action == 'tasks') {
+      const group = taskGroups.find((g) => g.name == taskGroup)
+      return group ? group.tasks : []
+    } else if (action == 'groups') {
+      const tabs = []
+      taskGroups.map((item) => {
+        tabs.push(item.name)
       })
-      fs.writeFileSync(filePath, JSON.stringify(taskGroups, null, 2))
+      return tabs
     }
-  }
-}
-const claimStar = (id, groupName) => {
-  console.log(id)
-  const filePath = path.join(process.cwd(), 'taskGroups.json')
-  if (fs.existsSync(filePath)) {
-    let taskGroups = JSON.parse(fs.readFileSync(filePath, 'utf8'))
-    const group = taskGroups.find((g) => g.name == groupName)
-    if (group) {
-      group.tasks.map((item) => {
-        if (item.id == id) {
-          item.star = !item.star
-        }
-      })
-      fs.writeFileSync(filePath, JSON.stringify(taskGroups, null, 2))
-    }
+    return []
   }
 }
 
-ipcMain.handle('addTaskGroup', (_, groupName) => addTaskGroup(groupName))
-ipcMain.handle('removeTaskGroup', (_, groupName) => removeTaskGroup(groupName))
-ipcMain.handle('addNewTask', (_, task, groupName) => addNewTask(task, groupName))
-ipcMain.handle('removeTask', (_, taskId, groupName) => removeTask(taskId, groupName))
-ipcMain.handle('getTasks', (_, taskGroup) => getTasks(taskGroup))
-ipcMain.handle('getGroups', () => getGroups())
-ipcMain.handle('confirmTask', (_, taskId, groupName) => confirmTask(taskId, groupName))
-ipcMain.handle('claimStar', (_, taskId, groupName) => claimStar(taskId, groupName))
+ipcMain.handle('addTaskGroup', (_, groupName) => groupHandle(groupName, 'addGroup'))
+ipcMain.handle('removeTaskGroup', (_, groupName) => groupHandle(groupName, 'removeGroup'))
+
+ipcMain.handle('addNewTask', (_, task, groupName) => actionHandle(task, groupName, 'addTask'))
+ipcMain.handle('removeTask', (_, task, groupName) => actionHandle(task, groupName, 'removeTask'))
+
+ipcMain.handle('confirmTask', (_, taskId, groupName) =>
+  changeTask(taskId, groupName, 'changeStatus')
+)
+ipcMain.handle('claimStar', (_, taskId, groupName) => changeTask(taskId, groupName, 'changeStar'))
+
+ipcMain.handle('getTasks', (_, taskGroup) => getData(taskGroup, 'tasks'))
+ipcMain.handle('getGroups', (_) => getData(_, 'groups'))

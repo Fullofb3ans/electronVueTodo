@@ -6,9 +6,26 @@
       {
         "id": 1,
         "name": "https://portal.emk.ru/intranet/calendar/calendar-ajax.php",
-        "status": "done",
+        "status": "",
         "star": false
       }
     ]
+  },
+  {
+    "id": 2,
+    "name": "123",
+    "tasks": [
+      {
+        "id": 1,
+        "name": "123",
+        "status": "",
+        "star": false
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "name": "321",
+    "tasks": []
   }
 ]
