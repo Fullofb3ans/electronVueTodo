@@ -97,8 +97,9 @@ const onlyUndone = ref(false);
         </div>
       </div>
       <div class="task__stat">
-        <div>Выполнено: {{ numberOfConfirmed }}</div>
-        <div>Всего: {{ tasks.length }}</div>
+        <div>Всего: <span class="colorSpan">{{ tasks.length }}</span></div>
+        <div>В работе: <span class="colorSpan"> {{ tasks.length - numberOfConfirmed}}</span></div>
+        <div>Выполнено: <span class="colorSpan">{{ numberOfConfirmed }}</span></div>
       </div>
     </div>
 
@@ -279,11 +280,11 @@ input:focus-visible {
 
 .content__nav {
   display: flex;
-  justify-content: space-between;
-  background-color: #2c2c2c;
-  border-radius: 8px;
-  overflow: hidden;
-  margin-bottom: 20px;
+    justify-content: space-between;
+    background-color: #2c2c2c;
+    border-radius: 8px;
+    overflow: hidden;
+    max-height: 37px;
 }
 
 .content__nav > div {
@@ -305,5 +306,9 @@ input:focus-visible {
 
 .activeTab:hover {
   /* background-color: #2a6b63; */
+}
+
+.colorSpan{
+  color: #46c1b2;
 }
 </style>
