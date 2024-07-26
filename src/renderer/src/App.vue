@@ -122,9 +122,7 @@ const onlyUndone = ref(false);
           </div>
           <div class="buttonsGroup">
             <StarIcon :class="{ active: todo.star }" @click="claimStar(todo.id)" />
-
             <button class="task__confirm" @click="confirmTask(todo.id)">Выполнил</button>
-
             <button class="task__delete" @click="removeTask(todo.id)">Удалить</button>
           </div>
         </div>
@@ -275,25 +273,37 @@ input:focus-visible {
   align-items: center;
 }
 
-.content__nav {
-  display: inline-flex;
-  gap: 50px;
-  color: #31d4be;
-  text-decoration: underline;
-  cursor: pointer;
-  align-items: self-end;
-  transition: 0.2s;
-}
-
-.content__nav > div:hover {
-  color: #1a6f64;
-}
-
 .none {
   display: none;
 }
 
+.content__nav {
+  display: flex;
+  justify-content: space-between;
+  background-color: #2c2c2c;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.content__nav > div {
+  padding: 6px 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex-grow: 1;
+  text-align: center;
+}
+
+.content__nav > div:hover {
+  /* background-color: #3c3c3c; */
+}
+
 .activeTab {
-  color: #1a6f64;
+  background-color: #3a9185;
+  color: white;
+}
+
+.activeTab:hover {
+  /* background-color: #2a6b63; */
 }
 </style>
