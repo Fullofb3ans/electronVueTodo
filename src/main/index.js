@@ -75,6 +75,12 @@ app.on('window-all-closed', () => {
 const fs = require('fs')
 const path = require('path')
 
+function fixIndexes(arr) {
+  for (let i = 0; i < arr.length; i++) {
+    arr[i].id = i + 1
+  }
+}
+
 const actionHandle = (task, groupName, action) => {
   const filePath = path.join(process.cwd(), 'taskGroups.json')
   if (fs.existsSync(filePath)) {
@@ -87,6 +93,7 @@ const actionHandle = (task, groupName, action) => {
         fs.writeFileSync(filePath, JSON.stringify(taskGroups, null, 2))
       } else if (action == 'removeTask') {
         group.tasks = group.tasks.filter((item) => item.id !== Number(task))
+        fixIndexes(group.tasks)
         fs.writeFileSync(filePath, JSON.stringify(taskGroups, null, 2))
       }
     }
